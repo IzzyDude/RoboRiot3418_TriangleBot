@@ -47,3 +47,27 @@ $$
 Motor3=(-X+Rotation)/Average3
 $$
 
+# S-Curve Motion Profile for Rotation and Tracking
+
+This function applies an s curve to an input ranging from -1 to +1. It does not however do this over time. Because of this if the input suddenly sets the motor speed to a high number rather than accelerating to it, the jerk will not be reduced. This function is intended to smooth out the motion of the robot when it is rotating to a position or tracking an object not to reduce jerk. However if the robot always accelerates to a position or speed rather than snapping to it this can be used to apply a s-curve to a linear motion profile. **It can be used with "S_CurveMotionProfile" and has 2 variables.** One is the input and the other is the scale. The scale affects the steepness of the curves.
+
+## Math
+
+$$
+y=\left\{-.5<x<.5:\left|x\right|^{s}\cdot\left(2^{\left(s-1\right)}\right),1>x>.5:-\left(\left|x-1\right|\right)^{s}\cdot\left(2^{\left(s-1\right)}\right)+1,1>-x>.5:-\left(\left|-x-1\right|\right)^{s}\cdot\left(2^{\left(s-1\right)}\right)+1\right\}
+$$
+
+this is a piecewise function made from these three functions
+$$
+y=\left|x\right|^{s}\cdot\left(2^{\left(s-1\right)}\right)\left\{-.5<x<.5\right\}
+$$
+
+$$
+y=-\left(\left|x-1\right|\right)^{s}\cdot\left(2^{\left(s-1\right)}\right)+1\left\{1>x>.5\right\}
+$$
+
+$$
+y=-\left(\left|-x-1\right|\right)^{s}\cdot\left(2^{\left(s-1\right)}\right)+1\left\{1>-x>.5\right\}
+$$
+
+This function is three parabolas with two points of infliction. The reason for this is because .5 and -.5 as an input will come out as .5 and -.5 as an output. Also when accelerating there are two curves, one for accelerating and one for decelerating.
