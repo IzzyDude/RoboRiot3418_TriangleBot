@@ -8,7 +8,6 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
@@ -28,7 +27,7 @@ import frc.robot.S_CurveMotionProfile;
 
 
 public class Robot extends TimedRobot {
-  private final SendableChooser<String> m_chooser = new SendableChooser<>();
+  //private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private TriangleDrive TriDrive = new TriangleDrive();
   private XboxController Controller1 = new XboxController(0);
   private AHRS GyroscopeNavX = new AHRS();
@@ -40,7 +39,7 @@ public class Robot extends TimedRobot {
   double DriverAngle=0;//The angle at which the driver is facing when starting and driving the robot.
   
   //Non Configurable Variables
-  double TargetDirectionRotation=0,TargetRotation=0,ActualRotation=0,RotationSpeed=0;//Rotation values
+  double TargetDirectionRotation=0,TargetRotation=0,RotationSpeed=0;//Rotation values
   double RX,RY,LX,LY;//Joystick values
   double ActualX=0,ActualY=0;//Robot X and Y speeds after acomidation for ratation
   int GyroSubtract=0;//The value to subtract from the gyroscop everytime it passes 360 degrees to make it match the behavior of the joystick.
@@ -96,14 +95,6 @@ public class Robot extends TimedRobot {
     
     //The select button toggles the FirstPersonMode boolean
     if(Controller1.getBackButtonPressed()){if(FirstPersonMode==true){FirstPersonMode=false;}else{FirstPersonMode=true;}}
-
-    //Set ActualRotation to The yaw of the gyroscope and make it not go past +-360 degrees
-    if(FirstPersonMode==false){
-      ActualRotation = GyroscopeNavX.getYaw();
-      ActualRotation = ActualRotation-GyroSubtract;
-      if (ActualRotation>=360){GyroSubtract=GyroSubtract+360;}
-      else if(ActualRotation<=-360){GyroSubtract=GyroSubtract-360;}
-    }
     
     //Set Joystick Values to Joysticks
     LX = Controller1.getX(Hand.kLeft);//Left Joystick, X axis 
@@ -130,8 +121,8 @@ public class Robot extends TimedRobot {
     
     //Figure out how fast in what direction to rotate the robot to set and corect its rotation.
     if(FirstPersonMode==false){
-      if((-1*ActualRotation)+TargetRotation<=180){RotationSpeed=(ActualRotation-TargetRotation)*RSpeedMultiplyer;}
-      if((-1*ActualRotation)+TargetRotation>180){RotationSpeed=(-1*(TargetRotation-ActualRotation)+360)*RSpeedMultiplyer;}
+      if((-1*GyroscopeNavX.getYaw())+TargetRotation<=180){RotationSpeed=MotionCurve.S_Curve((GyroscopeNavX.getYaw()-TargetRotation)*RSpeedMultiplyer, 2);}
+      if((-1*GyroscopeNavX.getYaw())+TargetRotation>180){RotationSpeed=MotionCurve.S_Curve((-1*(TargetRotation-GyroscopeNavX.getYaw())+360)*RSpeedMultiplyer, 2);}
     }
       else{RotationSpeed=RX;}
 
@@ -148,12 +139,12 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("RightJoystickX", RX);
     SmartDashboard.putNumber("RightJoystickY", RY);
     SmartDashboard.putNumber("RotationSpeedBeforeCurve", RotationSpeed);
-    SmartDashboard.putNumber("RotationAfterCurve", MotionCurve.S_Curve(RotationSpeed, 3));
+    SmartDashboard.putNumber("RotationAfterCurve", MotionCurve.S_Curve(RotationSpeed, 2));
     SmartDashboard.putNumber("X_Speed", ActualX);
     SmartDashboard.putNumber("Y_Speed", ActualY);
-    SmartDashboard.putNumber("Gyroscope_Yaw", ActualRotation);
+    SmartDashboard.putNumber("Gyroscope_Yaw", GyroscopeNavX.getYaw());
 
     //Move the Robot
-    TriDrive.MoveBot(0, 0, 0);
+    TriDrive.MoveBot(ActualX, ActualY, RotationSpeed);
   }
 }
