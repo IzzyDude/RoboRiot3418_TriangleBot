@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.GenericHID.Hand;
 import frc.robot.TriangleDrive;
 import com.kauailabs.navx.frc.AHRS;
 import frc.robot.S_CurveMotionProfile;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 
 
 /**
@@ -44,6 +45,7 @@ public class Robot extends TimedRobot {
   double ActualX=0,ActualY=0;//Robot X and Y speeds after acomidation for ratation
   int GyroSubtract=0;//The value to subtract from the gyroscop everytime it passes 360 degrees to make it match the behavior of the joystick.
   boolean FirstPersonMode = false;
+
 
   @Override
   public void robotInit() {
@@ -94,7 +96,16 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     
     //The select button toggles the FirstPersonMode boolean
-    if(Controller1.getBackButtonPressed()){if(FirstPersonMode==true){FirstPersonMode=false;}else{FirstPersonMode=true;}}
+    if(Controller1.getBackButtonPressed()){
+      if(FirstPersonMode==true){
+        FirstPersonMode=false;
+      }
+      else{
+        FirstPersonMode=true;
+      }
+    }
+    if(Controller1.getBackButton() && FirstPersonMode==true){Controller1.setRumble(RumbleType.kLeftRumble, .5);}
+    else if(Controller1.getBackButton() && FirstPersonMode==false){Controller1.setRumble(RumbleType.kLeftRumble, 1);Controller1.setRumble(RumbleType.kRightRumble, 1);}
     
     //Set Joystick Values to Joysticks
     LX = Controller1.getX(Hand.kLeft);//Left Joystick, X axis 
