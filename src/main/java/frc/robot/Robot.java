@@ -12,9 +12,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import frc.robot.TriangleDrive;
-import com.kauailabs.navx.frc.AHRS;
+//import com.kauailabs.navx.frc.AHRS;
 import frc.robot.S_CurveMotionProfile;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+//import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 
 
 /**
@@ -31,7 +32,8 @@ public class Robot extends TimedRobot {
   //private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private TriangleDrive TriDrive = new TriangleDrive();
   private XboxController Controller1 = new XboxController(0);
-  private AHRS GyroscopeNavX = new AHRS();
+  ///private AHRS GyroscopeNavX = new AHRS();
+  private ADXRS450_Gyro Gyroscope = new ADXRS450_Gyro();
   private S_CurveMotionProfile MotionCurve = new S_CurveMotionProfile();
 
   //Configurable Variables
@@ -103,8 +105,6 @@ public class Robot extends TimedRobot {
         FirstPersonMode=true;
       }
     }
-    if(Controller1.getBackButton() && FirstPersonMode==true){Controller1.setRumble(RumbleType.kLeftRumble, .5);}
-    else if(Controller1.getBackButton() && FirstPersonMode==false){Controller1.setRumble(RumbleType.kLeftRumble, 1);Controller1.setRumble(RumbleType.kRightRumble, 1);}
     
     //Set Joystick Values to Joysticks
     LX = Controller1.getX(Hand.kLeft);//Left Joystick, X axis 
@@ -123,48 +123,55 @@ public class Robot extends TimedRobot {
       
     //Figuring out the target rotation from the Right Joystick
     if(FirstPersonMode==false){
-      if(RX!=0 && RY!=0){TargetRotation = Math.toDegrees(Math.atan2(RY, RX));}
-      TargetDirectionAngle = Math.toDegrees(Math.atan2(LY, LX));
+      if(RX!=0 && RY!=0){TargetRotation = Math.toDegrees(Math.atan2(RX*-1, RY*-1));}
+      TargetDirectionAngle = Math.toDegrees(Math.atan2(LX*-1, LY*-1));
     }
     
     //Figure out ActualX and ActualY , these are the x and y variables after converting the joystick to a vector and back. 
-    TargetDirectionAngle=GyroscopeNavX.getYaw()-TargetDirectionAngle;
-
-    if(TargetDirectionAngle<-90 && TargetDirectionAngle<0){TargetDirectionAngle=180+TargetDirectionAngle;}//Finds the other side of the angle to the triangle can be solved.
-    if(TargetDirectionAngle>90 && TargetDirectionAngle>0){TargetDirectionAngle=180-TargetDirectionAngle;}//Remember to keep corect positive and negative for the correct quadrants.
-
-    ActualX = (Math.sin(180-(90+Math.abs(TargetDirectionAngle)))*Math.sqrt(Math.pow(LX, 2)+Math.pow(LY, 2)));
-    ActualY = (Math.sqrt(Math.pow(LX, 2)+Math.pow(LY, 2)))/Math.sin(Math.abs(TargetDirectionAngle));
-
-    if(GyroscopeNavX.getYaw()-TargetDirectionAngle>=-90 && GyroscopeNavX.getYaw()-TargetDirectionAngle<=0){ActualX=-1*Math.abs(ActualX); ActualY=-1*Math.abs(ActualY);}
-    if(GyroscopeNavX.getYaw()-TargetDirectionAngle<=90 && GyroscopeNavX.getYaw()-TargetDirectionAngle>=0){ActualX=Math.abs(ActualX); ActualY=-1*Math.abs(ActualY);}
-    if(GyroscopeNavX.getYaw()-TargetDirectionAngle>=90){ActualX=Math.abs(ActualX); ActualY=Math.abs(ActualY);}
-    if(GyroscopeNavX.getYaw()-TargetDirectionAngle<=-90){ActualX=-1*Math.abs(ActualX); ActualY=Math.abs(ActualY);}
+    if(FirstPersonMode==false){
+        //TargetDirectionAngle=TargetDirectionAngle-Gyroscope.roataion();
+        //if(TargetDirectionAngle<-90 && TargetDirectionAngle<0){TargetDirectionAngle=180+TargetDirectionAngle;}//Finds the other side of the angle to the triangle can be solved.
+        //if(TargetDirectionAngle>90 && TargetDirectionAngle>0){TargetDirectionAngle=180-TargetDirectionAngle;}//Remember to keep corect positive and negative for the correct quadrants.
+      ActualX = (Math.sin(180-(90+Math.abs(TargetDirectionAngle)))*Math.sqrt(Math.pow(LX, 2)+Math.pow(LY, 2)));
+        //ActualY = (Math.sqrt(Math.pow(LX, 2)+Math.pow(LY, 2)))/Math.sin(TargetDirectionAngle);
+      //if(Gyroscope.getAngle()-TargetDirectionAngle>=-90 && Gyroscope.getAngle()-TargetDirectionAngle<=0){ActualX=-1*Math.abs(ActualX); ActualY=-1*Math.abs(ActualY);}
+      //if(Gyroscope.getAngle()-TargetDirectionAngle<=90 && Gyroscope.getAngle()-TargetDirectionAngle>=0){ActualX=Math.abs(ActualX); ActualY=-1*Math.abs(ActualY);}
+      //if(Gyroscope.getAngle()-TargetDirectionAngle>=90){ActualX=Math.abs(ActualX); ActualY=Math.abs(ActualY);}
+      //if(Gyroscope.getAngle()-TargetDirectionAngle<=-90){ActualX=-1*Math.abs(ActualX); ActualY=Math.abs(ActualY);}
+        //ActualX=LX;
+      ActualY=LY;
+    }
+    else{
+      ActualX=LX;
+      ActualY=LY;
+    }
+    
 
     //Figure out how fast in what direction to rotate the robot to set and corect its rotation.
     if(FirstPersonMode==false){
-      if((-1*GyroscopeNavX.getYaw())+TargetRotation<=180){RotationSpeed=MotionCurve.S_Curve((GyroscopeNavX.getYaw()-TargetRotation)*RSpeedMultiplyer, 2);}
-      if((-1*GyroscopeNavX.getYaw())+TargetRotation>180){RotationSpeed=MotionCurve.S_Curve((-1*(TargetRotation-GyroscopeNavX.getYaw())+360)*RSpeedMultiplyer, 2);}
+      //if((-1*Gyroscope.getAngle())+TargetRotation<=180){RotationSpeed=MotionCurve.S_Curve((Gyroscope.getAngle()-TargetRotation)*RSpeedMultiplyer, 2);}
+      if(TargetRotation<0){RotationSpeed=-1*MotionCurve.S_Curve(((TargetRotation-Gyroscope.getAngle())+360)*RSpeedMultiplyer, 2);}
     }
       else{RotationSpeed=RX;}
 
-    //Limit from 1- to +1
+    //Limit Roataion speed from 1- to +1
     if(FirstPersonMode==false){
       if(RotationSpeed>1){RotationSpeed=1;} 
       else if(RotationSpeed<-1){RotationSpeed=-1;}
     }
 
     //Debug
+      //Inputs
     SmartDashboard.putString("Inputs", "");
     SmartDashboard.putBoolean("FirstPersonMode", FirstPersonMode);
     SmartDashboard.putNumber("RightJoystickX", RX);
     SmartDashboard.putNumber("RightJoystickY", RY);
     SmartDashboard.putNumber("LeftJoystickX", LX);
     SmartDashboard.putNumber("LeftJoystickY", LY);
-    SmartDashboard.putNumber("Gyroscope_Yaw", GyroscopeNavX.getYaw());
-    
+    SmartDashboard.putNumber("Gyroscope_Yaw", Gyroscope.getAngle());
+      //Outputs
     SmartDashboard.putString("Outputs", "");
-    SmartDashboard.putNumber("RightJoystickAngleDegrees", (Math.toDegrees(Math.atan2(RY, RX))));
+    SmartDashboard.putNumber("RightJoystickAngleDegrees", TargetRotation);
     SmartDashboard.putNumber("LeftJoystickAngleDegrees", (Math.toDegrees(Math.atan2(RY, RX))));
     SmartDashboard.putNumber("RotationSpeedBeforeCurve", RotationSpeed);
     SmartDashboard.putNumber("RotationAfterCurve", MotionCurve.S_Curve(RotationSpeed, 2));
@@ -172,6 +179,6 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Y_Speed", ActualY);
 
     //Move the Robot
-    TriDrive.MoveBot(ActualX, ActualY, RotationSpeed);
+    //TriDrive.MoveBot(ActualX, ActualY, RotationSpeed);
   }
 }

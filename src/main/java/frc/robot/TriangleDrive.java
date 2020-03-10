@@ -40,8 +40,9 @@ public class TriangleDrive {
         Motor3.set(((((LX)*-1)+RX)/Average[2]));//Average Inverted X speed with rotation speed 
 
         //Clears the average variables
-            Average[0]=0;
-            Average[1]=0;
-            Average[2]=0;
+        Average[0]=0;
+        Average[1]=0;
+        Average[2]=0;
+        
     }    
 }
